@@ -1,43 +1,51 @@
 package cabd;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 
 public class ConnectionHandler extends Thread {
+	Connections cons;
 	PoolConnection pc = new PoolConnection();
 	Pool pool_config = Pool.getInstance();
 	int initial_slots = pool_config.getInitial_connections();
 	int growing_number = pool_config.getConnections_grow();
-	Connection con;
+	int max_slots = pool_config.getMax_connections();
 
 	public synchronized void run(){
 		try{
-			getConnection();
-			System.out.println(pc.aConnections.size());
+			while(pc.aConnections.size() < max_slots) {
+				if (pc.aConnections.size() < initial_slots) {
+					for (int i=0; i<initial_slots; i++) {
+						getConnection(cons);
+						Thread.sleep(500);
+					}	
+					System.out.println("POOL INITIALIZED WITH 20 CONNECTIONS\n");
+				} else {
+					for (int i=0; i<growing_number; i++) {
+						getConnection(cons);
+						Thread.sleep(500);
+					}
+					System.out.println("POOL SIZE: "+pc.aConnections.size()+"\n");
+				}
+			if (pc.aConnections.size() == max_slots) {
+				for (int i=0; i<5; i++)
+					returnConnection();
+				}
+			}
 		}catch(Exception e){
 			e.printStackTrace();
 	 	}
 	}
 	
-	public synchronized Connection getConnection() throws InterruptedException {
-				con = pc.ConnectionUsed();
-				pc.aConnections.add(con);
-				return con;
-	}
-			
-	public synchronized Connection growConnection() throws InterruptedException {
-			for (int i=0; i<growing_number; i++) {
-				 con = pc.aConnections.get(i);
-				 pc.aConnections.add(con);
-				 Thread.sleep(500);
-		}		 return null;
+	public synchronized void getConnection(Connections cons) throws InterruptedException {
+		cons = new Connections();
+		cons.start();
+		Thread.sleep(500);
+		pc.aConnections.add(cons);
 	}
 
-	public synchronized void returnConnection(Connection conn) throws InterruptedException {
-		    int con = 0;
-			conn = pc.aConnections.get(con);
-			pc.aConnections.remove(con);
-			System.out.println("Connection " + (con + 1) + " finished");
+			
+	public synchronized void returnConnection() throws InterruptedException {
+			pc.aConnections.remove(0);
 			Thread.sleep(500);
+			System.out.println("Connection #"+(pc.aConnections.size()+1)+" finished");
     }
 }

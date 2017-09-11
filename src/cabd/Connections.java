@@ -7,11 +7,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class Connections extends Thread {
-	Connection con = null;
+	Connection con;
 	Pool pool = new Pool();
 	
 	public void run() {
-		Connect();
+		try {
+			Connect();
+			Query();
+			Thread.sleep(9000);
+		} catch (SQLException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public synchronized Connection Connect() {
@@ -20,15 +27,14 @@ public class Connections extends Thread {
 			Class.forName(pool.getDriver());
 			con = (Connection) DriverManager.getConnection(pool.getUrl(), 
 					pool.getUsername(), pool.getPassword());
-			System.out.println("A new connection has been created");
-			Thread.sleep(500);
+			System.out.println("NEW CONNECTION ESTABLISHED");
 			}catch (Exception e) {
 			e.printStackTrace();
 		}
 		return con;
 	}
 		
-	 public synchronized Connection Disconnect(Connection con) {
+	 public synchronized Connection Disconnect() {
 		try {
 			con.close();
 			System.out.println("Connection closed");
@@ -45,7 +51,7 @@ public class Connections extends Thread {
 	    System.out.println("===FIELDS===");
 	    while (rs.next()) {
 	        System.out.println(rs.getString("field"));
-			Thread.sleep(500);
 	    }
+	    System.out.println("\n");
 	}
 }
