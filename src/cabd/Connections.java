@@ -52,6 +52,5 @@ public class Connections extends Thread {
 	    while (rs.next()) {
 	        System.out.println(rs.getString("field"));
 	    }
-	    System.out.println("\n");
 	}
 }

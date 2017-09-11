@@ -15,13 +15,11 @@ public class ConnectionHandler extends Thread {
 				if (pc.aConnections.size() < initial_slots) {
 					for (int i=0; i<initial_slots; i++) {
 						getConnection(cons);
-						Thread.sleep(500);
 					}	
 					System.out.println("POOL INITIALIZED WITH 20 CONNECTIONS\n");
 				} else {
 					for (int i=0; i<growing_number; i++) {
 						getConnection(cons);
-						Thread.sleep(500);
 					}
 					System.out.println("POOL SIZE: "+pc.aConnections.size()+"\n");
 				}
@@ -36,10 +34,14 @@ public class ConnectionHandler extends Thread {
 	}
 	
 	public synchronized void getConnection(Connections cons) throws InterruptedException {
+		long start = System.currentTimeMillis();
 		cons = new Connections();
 		cons.start();
 		Thread.sleep(500);
 		pc.aConnections.add(cons);
+		long finish = System.currentTimeMillis();
+		long time = finish - start;
+		System.out.println("Time connecting: "+time+"\n");
 	}
 
 			
