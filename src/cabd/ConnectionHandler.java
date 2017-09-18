@@ -1,53 +1,58 @@
 package cabd;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class ConnectionHandler extends Thread {
-	Connections cons;
+	Connections cons = new Connections();
+	Connection con = cons.Connect();
 	PoolConnection pc = new PoolConnection();
 	Pool pool_config = Pool.getInstance();
 	int initial_slots = pool_config.getInitial_connections();
 	int growing_number = pool_config.getConnections_grow();
 	int max_slots = pool_config.getMax_connections();
-
-	public synchronized void run(){
-		try{
-			while(pc.aConnections.size() < max_slots) {
-				if (pc.aConnections.size() < initial_slots) {
-					for (int i=0; i<initial_slots; i++) {
-						getConnection(cons);
-					}	
-					System.out.println("POOL INITIALIZED WITH 20 CONNECTIONS\n");
-				} else {
-					for (int i=0; i<growing_number; i++) {
-						getConnection(cons);
-					}
-					System.out.println("POOL SIZE: "+pc.aConnections.size()+"\n");
-				}
-			if (pc.aConnections.size() == max_slots) {
-				for (int i=0; i<5; i++)
-					returnConnection();
-				}
-			}
-		}catch(Exception e){
+	
+	public synchronized void run() {
+		try {		
+			long start = System.currentTimeMillis();
+			getConnection();
+			cons.Query();
+			cons.Disconnect();
+			long end = System.currentTimeMillis();
+			long total = end - start;
+			System.out.println("Connection time "+total+" ms\n");
+		} catch (Exception e) {
 			e.printStackTrace();
-	 	}
+		}
 	}
 	
-	public synchronized void getConnection(Connections cons) throws InterruptedException {
-		long start = System.currentTimeMillis();
-		cons = new Connections();
-		cons.start();
-		Thread.sleep(500);
-		pc.aConnections.add(cons);
-		long finish = System.currentTimeMillis();
-		long time = finish - start;
-		System.out.println("Time connecting: "+time+"\n");
+
+	public synchronized Connection getConnection() throws InterruptedException {
+		if(pc.aConnections.size() < max_slots) {
+			if (!(pc.aConnections.size() == 0))	 {
+				pc.aConnections.get(0);
+				con = pc.aConnections.remove(0);
+				System.out.println("Connections available: "+pc.aConnections.size());
+				Thread.sleep(500);
+			} else {
+				this.addConnection();
+				Thread.sleep(500);
+			}
+		}
+		return con;
+	}
+	
+	public synchronized void addConnection() throws InterruptedException {
+		for (int i=0; i<growing_number; i++) {
+			pc.aConnections.add(con);
+		}
+		System.out.println("Pool size increased by 5\n");
 	}
 
 			
-	public synchronized void returnConnection() throws InterruptedException {
-			pc.aConnections.remove(0);
-			Thread.sleep(500);
-			System.out.println("Connection #"+(pc.aConnections.size()+1)+" finished");
-    }
+	public synchronized void returnConnection(Connection con) throws InterruptedException, SQLException {
+		cons.Disconnect();
+		pc.aConnections.add(con);
+		Thread.sleep(500);
+	}
 }
