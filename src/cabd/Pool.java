@@ -4,7 +4,7 @@ package cabd;
 public class Pool {
 	
 	private String username = "postgres";
-	private String password = "cesar5683072";
+	private String password = "";
 	private String url = "jdbc:postgresql://localhost:5432/kbase";
 	private String driver = "org.postgresql.Driver";
 	private int max_connections = 50;	
